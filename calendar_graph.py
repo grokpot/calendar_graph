@@ -2,7 +2,7 @@
 
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask
 import gflags
 import httplib2
@@ -43,10 +43,32 @@ http = credentials.authorize(http)
 service = build(serviceName='calendar', version='v3', http=http,
        developerKey='AIzaSyABUruIM32B_0fRE0LtSZCRK4AxIXDcFrg')
 
+## Map data structure
+# date_map =
+# {
+#   date:
+#     {
+#       total_time:
+#         all_event_times_combined,
+#       calendars:
+#         {
+#           calendar_id:
+#             [
+#               total_calendar_event_time,
+#               %_of_day
+#             ]
+#         }
+#     }
+# }
+# BigO((calendar * event) + (calendar * average)) = O(x(y+z))
+
+# TODO: skip processing if date_map is cached
+date_map = {}
 num_events = 0
 calendars = service.calendarList().list().execute()['items'] # Read in all calendars for user
 for calendar in calendars:
-    print "Processing calendar %s" % calendar['summary']
+    calendar_name = calendar['summary']
+    print "Processing calendar %s" % calendar_name
     page_token = None
     # Read all events per calendar
     while True:
@@ -65,14 +87,39 @@ for calendar in calendars:
                     # Now format it to a stable format
                     event_start = datetime.strptime(event_start_string, '%Y-%m-%dT%H:%M:%S')
                     event_end = datetime.strptime(event_end_string, '%Y-%m-%dT%H:%M:%S')
-                    if event_end.day != event_start.day:
-                        print "TODO: handle events that span days"
-                    else:
+                    # If it's an event contained in a single day, add its time to the map
+                    if event_end.day == event_start.day:
                         event_duration = event_end - event_start
+
+                        # TODO: Split into seperate function
+                        # Get the date for this event
+                        current_date_dict = date_map.get(event_start.date, {})
+                        total_time = timedelta(0)
+                        current_date_calendar_data = [timedelta(0), None]
+                        # If this date already has data
+                        if current_date_dict:
+                            # Increase the total date's duration
+                            total_time = current_date_dict.get('total_time', timedelta(0)) + event_duration
+                            # Get the calendar data for the current date, set calendar event time and % to zero and None if creating
+                            current_date_calendar_data = current_date_dict.get('calendars').get(calendar_name, current_date_calendar_data)
+                            # Add this current event's duration to the calendar duration for that day
+                            current_date_calendar_data = [current_date_calendar_data[0] + event_duration, None]
+                        if not current_date_dict.get('calendars'):
+                            current_date_dict['calendars'] = {}
+                        current_date_dict['calendars'][calendar_name] = current_date_calendar_data
+                        current_date_dict['total_time'] = total_time
+                    # Events that span multiple days
+                    else:
+                        print "TODO: handle events that span days"
         page_token = events.get('nextPageToken')
+        print date_map
         if not page_token:
             break
 print "%s events were processed" % num_events
+
+# TODO: cache date_map
+
+
 
 @app.route("/")
 def hello():
