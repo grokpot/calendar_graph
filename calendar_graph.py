@@ -159,7 +159,7 @@ print "%s events were processed" % num_events
 
 @app.route("/")
 def hello():
-    return render_template('index.html', calendars=CALENDARS, dates_map=dates_map)
+    return render_template('index.html', calendars=CALENDARS, dates_map=dates_map, today=datetime.today())
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

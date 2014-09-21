@@ -4,32 +4,32 @@
     <meta charset="UTF-8">
     <title></title>
     <script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
-    <script src="http://code.highcharts.com/highcharts.js"></script>
+{#    <script src="http://code.highcharts.com/highcharts.js"></script>#}
+    <script src="http://code.highcharts.com/stock/highstock.js"></script>
     <script src="http://code.highcharts.com/modules/exporting.js"></script>
     <script src="/static/js/highcharts_dark_theme.js"></script>
 
     <script>
         $(document).ready(function() {
-            chart = $('#container').highcharts({
+            chart = $('#container').highcharts('StockChart', {
                 chart: {
                     type: 'column',
                     zoomType: 'x'
                 },
                 title: {
-                    text: 'Percent composition of date by calendar'
+                    text: 'Percent composition of date by calendar',
+                    x: -200
+                },
+                legend: {
+                    enabled: true
                 },
                 xAxis: {
-{#                    dateTimeLabelFormats: {#}
-{#                        month: '%e. %b',#}
-{#                        year: '%b'#}
-{#                    },#}
                     tickmarkPlacement: 'on',
                     title: {
                         enabled: false
                     },
                     type: 'datetime',
-                    max: Date.now(),
-                    min: Date.UTC(2012, 9, 1) // where the data starts getting good
+                    max: Date.now()
                 },
                 yAxis: {
                     title: {
@@ -54,9 +54,38 @@
                     column: {
                         stacking: 'percent'
                     }
+                },
+                exporting: {
+                    buttons: {
+                        thisYearButton: {
+                            x: -255,
+                            onclick: function () {
+                                chart.xAxis[0].setExtremes(Date.UTC(2014, 1, 1), Date.UTC(2015, 1, 1));
+                            },
+                            symbol: 'square',
+                            text: "2014"
+                        },
+                        lastMonthButton: {
+                            x: -175,
+                            onclick: function () {
+                                chart.xAxis[0].setExtremes(Date.UTC(2014, 8, 1), Date.UTC(2014, 8, 30));
+                            },
+                            symbol: 'square',
+                            text: "08/14"
+                        },
+                        lastWeekButton: {
+                            x: -50,
+                            onclick: function () {
+                                chart.xAxis[0].setExtremes(Date.UTC(2014, 8, 14), Date.UTC(2014, 8, 20));
+                            },
+                            symbol: 'square',
+                            text: "week in 08/14"
+                        }
+                    }
                 }
+
             });
-            var chart = $('#container').highcharts();
+            chart = $('#container').highcharts();
             $.each(Object.keys(seriesOptions), function (itemNo, seriesName) {
                 // Sorts series by date
                 seriesOptions[seriesName].sort(function(a,b) { return a[0] - b[0] } );
@@ -64,6 +93,30 @@
                     name: seriesName,
                     data: seriesOptions[seriesName]
                 }, true);
+            });
+            chart.addSeries({
+                type: 'flags',
+                name: 'Notes',
+                data: [
+                    {
+                        x: Date.UTC(2013, 10, 15),
+                        text: 'Position change at Thinktiv and I started to record more work information on my calendar.',
+                        title: 'NOTE'
+                    },
+                    {
+                        x: Date.UTC(2010, 11, 1),
+                        text: 'Added Important calendar for homework, Productive calendar for studying/chores',
+                        title: 'NOTE'
+                    },
+                    {
+                        x: Date.UTC(2013, 1, 21),
+                        text: 'Started work at Thinktiv',
+                        title: 'NOTE'
+                    }
+                ],
+                tooltip: {
+                    pointFormat: '{point.text}'
+                }
             });
         });
 
@@ -73,11 +126,16 @@
         {% endfor %}
         {% for date, date_data in dates_map.iteritems() %}
             {% for calendar, calendar_data in date_data.calendars.iteritems() %}
+                {% if date <= today.date() %}
                 {% if calendar_data.1 != None %} // TODO: This shouldn't occur, but it does
         seriesOptions["{{ calendar }}"].push([Date.parse("{{ date.month }} {{ date.day }}, {{ date.year }}"), {{ calendar_data.1 }}]);
                 {% endif %}
+                {% endif %}
             {% endfor %}
         {% endfor %}
+
+        // TODO: markers explaining big events
+
     </script>
 
 </head>
@@ -85,13 +143,5 @@
 
 <div id="container" style="min-width: 310px; height: 400px; max-width: 800px; margin: 0 auto"></div>
 
-{% for date, date_data in dates_map.iteritems() %}
-    {{ date }}<br>
-    {% for calendar, cal_data in date_data.calendars.iteritems() %}
-        {{ calendar }}, {{ cal_data.1 }}% <br>
-    {% endfor %}
-    <br>
-    <br>
-{% endfor %}
 </body>
 </html>
