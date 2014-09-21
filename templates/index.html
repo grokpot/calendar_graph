@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+    <script src="/static/js/highcharts_dark_theme.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            chart = $('#container').highcharts({
+                chart: {
+                    type: 'column',
+                    zoomType: 'x'
+                },
+                title: {
+                    text: 'Percent composition of date by calendar'
+                },
+                xAxis: {
+{#                    dateTimeLabelFormats: {#}
+{#                        month: '%e. %b',#}
+{#                        year: '%b'#}
+{#                    },#}
+                    tickmarkPlacement: 'on',
+                    title: {
+                        enabled: false
+                    },
+                    type: 'datetime',
+                    max: Date.now(),
+                    min: Date.UTC(2012, 9, 1) // where the data starts getting good
+                },
+                yAxis: {
+                    title: {
+                        text: 'Percent'
+                    },
+                    max: 100    // TODO: values shouldn't go over 100
+                },
+                tooltip: {
+                    pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b><br/>',
+                    shared: true
+                },
+                plotOptions: {
+                    area: {
+                        stacking: 'percent',
+                        lineColor: '#ffffff',
+                        lineWidth: 1,
+                        marker: {
+                            lineWidth: 1,
+                            lineColor: '#ffffff'
+                        }
+                    },
+                    column: {
+                        stacking: 'percent'
+                    }
+                }
+            });
+            var chart = $('#container').highcharts();
+            $.each(Object.keys(seriesOptions), function (itemNo, seriesName) {
+                // Sorts series by date
+                seriesOptions[seriesName].sort(function(a,b) { return a[0] - b[0] } );
+                chart.addSeries({
+                    name: seriesName,
+                    data: seriesOptions[seriesName]
+                }, true);
+            });
+        });
+
+        seriesOptions = [];
+        {% for calendar in calendars %}
+            seriesOptions["{{calendar}}"] = [];
+        {% endfor %}
+        {% for date, date_data in dates_map.iteritems() %}
+            {% for calendar, calendar_data in date_data.calendars.iteritems() %}
+                {% if calendar_data.1 != None %} // TODO: This shouldn't occur, but it does
+        seriesOptions["{{ calendar }}"].push([Date.parse("{{ date.month }} {{ date.day }}, {{ date.year }}"), {{ calendar_data.1 }}]);
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </script>
+
+</head>
+<body>
+
+<div id="container" style="min-width: 310px; height: 400px; max-width: 800px; margin: 0 auto"></div>
+
+{% for date, date_data in dates_map.iteritems() %}
+    {{ date }}<br>
+    {% for calendar, cal_data in date_data.calendars.iteritems() %}
+        {{ calendar }}, {{ cal_data.1 }}% <br>
+    {% endfor %}
+    <br>
+    <br>
+{% endfor %}
+</body>
+</html>
