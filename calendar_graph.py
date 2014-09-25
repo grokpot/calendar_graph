@@ -1,4 +1,5 @@
 #http://virantha.com/2013/11/14/starting-a-simple-flask-app-with-heroku/
+import json
 
 import os
 import re
@@ -8,15 +9,41 @@ from flask.templating import render_template
 import gflags
 import httplib2
 from apiclient.discovery import build
-from oauth2client.client import OAuth2WebServerFlow
+from oauth2client.client import OAuth2WebServerFlow, OAuth2Credentials
 from oauth2client.file import Storage
 from oauth2client.tools import run
 
 app = Flask(__name__)
 
+# Read foreman environment variables into context (only really needed for dev environment)
+def read_env():
+    """Pulled from Honcho code with minor updates, reads local default
+    environment variables from a .env file located in the project root
+    directory.
+    http://www.wellfireinteractive.com/blog/easier-12-factor-django/
+    """
+    try:
+        with open(os.path.join(os.path.dirname(__file__), '.env')) as f:
+            content = f.read()
+    except IOError:
+        content = ''
+
+    for line in content.splitlines():
+        m1 = re.match(r'\A([A-Za-z_0-9]+)=(.*)\Z', line)
+        if m1:
+            key, val = m1.group(1), m1.group(2)
+            m2 = re.match(r"\A'(.*)'\Z", val)
+            if m2:
+                val = m2.group(1)
+            m3 = re.match(r'\A"(.*)"\Z', val)
+            if m3:
+                val = re.sub(r'\\(.)', r'\1', m3.group(1))
+            os.environ.setdefault(key, val)
+
 # pip install python-gflags
 FLAGS = gflags.FLAGS
 
+read_env()
 # loaded from local .env file via foreman or Heroku env vars
 CLIENT_ID = os.environ.get('CLIENT_ID', None)
 CLIENT_SECRET = os.environ.get('CLIENT_SECRET', None)
@@ -34,11 +61,20 @@ FLOW = OAuth2WebServerFlow(
 # If the Credentials don't exist or are invalid, run through the native client
 # flow. The Storage object will ensure that if successful the good
 # Credentials will get written back to a file.
-AUTH_FILE = os.path.join(os.path.dirname(__file__), 'auth.dat')
-storage = Storage(AUTH_FILE)
-credentials = storage.get()
-if credentials is None or credentials.invalid:
-    credentials = run(FLOW, storage)
+credentials_json = json.loads(os.environ.get('CREDENTIALS'))
+if credentials_json:
+    # build OAuth credentials from environment vars
+    credentials = OAuth2Credentials(credentials_json['access_token'],
+                                credentials_json['client_id'], # Client ID
+                                credentials_json['client_secret'],
+                                credentials_json['refresh_token'],
+                                credentials_json['token_expiry'], # token expiry
+                                credentials_json['token_uri'],
+                                'bullshit_user_agent')
+else:
+    AUTH_FILE = os.path.join(os.path.dirname(__file__), 'auth.dat')
+    auth_storage = Storage(AUTH_FILE)
+    credentials = run(FLOW, auth_storage)
 
 # Create an httplib2.Http object to handle our HTTP requests and authorize it
 # with our good Credentials.
