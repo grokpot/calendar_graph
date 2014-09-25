@@ -1,1 +1,1 @@
-web: python dealscraper/calendar_graph.py
+web: python calendar_graph.py

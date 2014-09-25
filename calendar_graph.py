@@ -2,13 +2,13 @@
 
 import os
 import re
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
 from flask import Flask
 from flask.templating import render_template
 import gflags
 import httplib2
 from apiclient.discovery import build
-from oauth2client.client import flow_from_clientsecrets
+from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.file import Storage
 from oauth2client.tools import run
 
@@ -17,19 +17,26 @@ app = Flask(__name__)
 # pip install python-gflags
 FLAGS = gflags.FLAGS
 
-#https://developers.google.com/api-client-library/python/guide/aaa_oauth#flow_from_clientsecrets
-# CLIENT_SECRETS is name of a file containing the OAuth 2.0 information for this
-# application, including client_id and client_secret.
-CLIENT_SECRETS = os.path.join(os.path.dirname(__file__), 'client_secrets.json')
-AUTH_FILE = os.path.join(os.path.dirname(__file__), 'auth.dat')
-FLOW = flow_from_clientsecrets(CLIENT_SECRETS, scope='https://www.googleapis.com/auth/calendar')
+# loaded from local .env file via foreman or Heroku env vars
+CLIENT_ID = os.environ.get('CLIENT_ID', None)
+CLIENT_SECRET = os.environ.get('CLIENT_SECRET', None)
+API_KEY = os.environ.get('API_KEY', None)
+
+FLOW = OAuth2WebServerFlow(
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET,
+    scope="https://www.googleapis.com/auth/calendar",
+    redirect_uri='urn:ietf:wg:oauth:2.0:oob',
+    access_type='offline', # get an access token
+    approval_prompt='force'
+)
 
 # If the Credentials don't exist or are invalid, run through the native client
 # flow. The Storage object will ensure that if successful the good
 # Credentials will get written back to a file.
+AUTH_FILE = os.path.join(os.path.dirname(__file__), 'auth.dat')
 storage = Storage(AUTH_FILE)
 credentials = storage.get()
-
 if credentials is None or credentials.invalid:
     credentials = run(FLOW, storage)
 
@@ -42,7 +49,7 @@ http = credentials.authorize(http)
 # the Google Developers Console
 # to get a developerKey for your own application.
 service = build(serviceName='calendar', version='v3', http=http,
-       developerKey='AIzaSyABUruIM32B_0fRE0LtSZCRK4AxIXDcFrg')
+       developerKey=API_KEY)
 
 ## Map data structure
 # date_map =
@@ -124,7 +131,7 @@ for calendar in calendars:
                         else:
                             day_count = (event_end.date() - event_start.date()).days + 1
                             for single_date in (event_start + timedelta(n) for n in range(day_count)):
-                                duration = timedelta(hours=24)
+                                duration = timedelta(hours=12)
                                 # if it's the first day, take the difference from 12:00am tomorrow and the event start
                                 if single_date.date() == event_start.date():
                                     duration = datetime.combine(event_start.date() + timedelta(days=1), datetime.min.time()) - event_start
@@ -135,14 +142,14 @@ for calendar in calendars:
             page_token = events.get('nextPageToken')
             if not page_token:
                 break
-        print dates_map
 
 # Iterate through calendar map and calculate percent composition of each day for each calendar
 for key, current_date_data in dates_map.items():
     total_time = current_date_data['total_time']
     for cal, cal_data in current_date_data['calendars'].items():
         if total_time.total_seconds() > 0:
-            percent_of_day = (cal_data[0].total_seconds() / total_time.total_seconds()) * 100
+            # percent_of_day = (cal_data[0].total_seconds() / total_time.total_seconds()) * 100
+            percent_of_day = (cal_data[0].total_seconds() / timedelta(days=1).total_seconds()) * 100
             current_date_data['calendars'][cal] = [cal_data[0], round(percent_of_day, 2)]
 
 

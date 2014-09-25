@@ -33,9 +33,8 @@
                 },
                 yAxis: {
                     title: {
-                        text: 'Percent'
-                    },
-                    max: 100    // TODO: values shouldn't go over 100
+                        text: 'Percent of day'
+                    }
                 },
                 tooltip: {
                     pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b><br/>',
@@ -43,7 +42,6 @@
                 },
                 plotOptions: {
                     area: {
-                        stacking: 'percent',
                         lineColor: '#ffffff',
                         lineWidth: 1,
                         marker: {
@@ -109,7 +107,12 @@
                         title: 'NOTE'
                     },
                     {
-                        x: Date.UTC(2013, 1, 21),
+                        x: Date.UTC(2012, 6, 1),
+                        text: "Worked at Indeed, didn't keep track of work or productivity on my calendar",
+                        title: 'NOTE'
+                    },
+                    {
+                        x: Date.UTC(2013, 0, 21),
                         text: 'Started work at Thinktiv',
                         title: 'NOTE'
                     }
