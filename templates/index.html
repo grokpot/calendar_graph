@@ -17,7 +17,7 @@
             {% for calendar, calendar_data in date_data.calendars.iteritems() %}
                 {% if date <= today.date() %}
                 {% if calendar_data.1 != None %} // TODO: This shouldn't occur, but it does
-        seriesOptions["{{ calendar }}"].push([Date.parse("{{ date.month }} {{ date.day }}, {{ date.year }}"), {{ calendar_data.0 }}]);
+        seriesOptions["{{ calendar }}"].push([Date.parse("{{ date.month }} {{ date.day }}, {{ date.year }}"), {{ calendar_data }}]);
                 {% endif %}
                 {% endif %}
             {% endfor %}
@@ -49,6 +49,10 @@
                     title: {
                         text: 'Percent of time recorded'
                     }
+                },
+                tooltip: {
+                    pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b><br/>',
+                    shared: true
                 },
                 plotOptions: {
                     area: {

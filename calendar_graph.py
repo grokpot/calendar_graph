@@ -92,43 +92,31 @@ service = build(serviceName='calendar', version='v3', http=http,
 # {
 #   date_object:
 #     {
-#       'total_time':
-#         all_event_times_combined,
+#       'total_time': all_event_times_combined_in_seconds,
 #       'calendars':
 #         {
-#           calendar_name:
-#             [
-#               total_calendar_event_time,
-#               %_of_day
-#             ]
+#           calendar_name: total_calendar_event_time_in_seconds,
 #         }
 #     }
 # }
-# Build date map from events then go back and average it
-# BigO((calendar * event) + (calendar * average)) = O(x(y+z))
-
 dates_map = {}
 CALENDARS = ['Productive', 'Fun', 'Important', 'Exercise', 'rprater@thinktiv.com']
 
 def add_duration_to_date(current_date, duration, calendar_name):
     # Get the date for this event
     current_date_data = dates_map.get(current_date, {})
-    total_time = duration
-    current_date_calendar_data = [duration, None]
-    if current_date == date(2014, 6, 26):
-        pass
+    total_time = duration.total_seconds()
+    calendar_time = duration.total_seconds()
     # If this date already has data
     if current_date_data:
         # Increase the total date's duration
-        total_time = current_date_data.get('total_time', timedelta(0)) + event_duration
-        # Get the calendar data for the current date, set calendar event time and % to zero and None if creating
-        current_date_calendar_data = current_date_data.get('calendars').get(calendar_name, current_date_calendar_data)
-        # Add this current event's duration to the calendar duration for that day
-        current_date_calendar_data = [current_date_calendar_data[0] + event_duration, None]
+        total_time += current_date_data.get('total_time', 0)
+        # Get the time spent on this day for this calendar and add the duration of the current event
+        calendar_time += current_date_data.get('calendars').get(calendar_name, 0)
     if not current_date_data.get('calendars'):
         current_date_data['calendars'] = {}
-    current_date_data['calendars'][calendar_name] = current_date_calendar_data
     current_date_data['total_time'] = total_time
+    current_date_data['calendars'][calendar_name] = calendar_time
     dates_map.update({current_date: current_date_data})
 
 num_events = 0
@@ -185,15 +173,6 @@ for calendar in calendars:
             page_token = events.get('nextPageToken')
             if not page_token:
                 break
-
-# Iterate through calendar map and calculate percent composition of each day for each calendar
-for key, current_date_data in dates_map.items():
-    total_time = current_date_data['total_time']
-    for cal, cal_data in current_date_data['calendars'].items():
-        if total_time.total_seconds() > 0:
-            # percent_of_day = (cal_data[0].total_seconds() / total_time.total_seconds()) * 100
-            percent_of_day = (cal_data[0].total_seconds() / timedelta(days=1).total_seconds()) * 100
-            current_date_data['calendars'][cal] = [(cal_data[0].total_seconds() / 3600.0), round(percent_of_day, 2)]
 print "%s events were processed" % num_events
 
 @app.route("/")
