@@ -3,7 +3,7 @@ import json
 
 import os
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from flask import Flask
 from flask.templating import render_template
 import gflags
@@ -108,13 +108,15 @@ service = build(serviceName='calendar', version='v3', http=http,
 # BigO((calendar * event) + (calendar * average)) = O(x(y+z))
 
 dates_map = {}
-CALENDARS = ['Productive', 'Fun', 'Important', 'Other', 'Exercise', 'rprater@thinktiv.com']
+CALENDARS = ['Productive', 'Fun', 'Important', 'Exercise', 'rprater@thinktiv.com']
 
-def add_duration_to_date(date, duration, calendar_name):
+def add_duration_to_date(current_date, duration, calendar_name):
     # Get the date for this event
-    current_date_data = dates_map.get(date, {})
-    total_time = event_duration
-    current_date_calendar_data = [event_duration, None]
+    current_date_data = dates_map.get(current_date, {})
+    total_time = duration
+    current_date_calendar_data = [duration, None]
+    if current_date == date(2014, 6, 26):
+        pass
     # If this date already has data
     if current_date_data:
         # Increase the total date's duration
@@ -127,10 +129,7 @@ def add_duration_to_date(date, duration, calendar_name):
         current_date_data['calendars'] = {}
     current_date_data['calendars'][calendar_name] = current_date_calendar_data
     current_date_data['total_time'] = total_time
-    dates_map.update({date: current_date_data})
-
-
-# TODO: skip processing if date_map is cached
+    dates_map.update({current_date: current_date_data})
 
 num_events = 0
 calendars = service.calendarList().list().execute()['items'] # Read in all calendars for user
@@ -146,11 +145,14 @@ for calendar in calendars:
                 num_events += 1
                 # Some events are cancelled, etc. and do not have times
                 if event.get('start') and event.get('end'):
-                    # All day events
+                    # All day events (date objects)
                     if event.get('start').get('date') and event.get('end').get('date'):
                         event_start_string = re.match('(\d{4}-\d{2}-\d{2})', event.get('start').get('date')).group()
                         event_start = datetime.strptime(event_start_string, '%Y-%m-%d')
-                        add_duration_to_date(event_start.date(), timedelta(hours=24), calendar_name)
+                        event_end_string = re.match('(\d{4}-\d{2}-\d{2})', event.get('end').get('date')).group()
+                        # subtract a day because if an all day event ends at midnight, google returns the following date
+                        event_end = datetime.strptime(event_end_string, '%Y-%m-%d') - timedelta(days=1)
+                    # Events with times (datetime objects)
                     else :
                         # Google may or may not append milliseconds or timezones, so split that off and return the match
                         event_start_string = re.match('(\d{4}-\d{2}-\w{5}:\d{2}:\d{2})', event.get('start').get('dateTime')).group()
@@ -158,23 +160,28 @@ for calendar in calendars:
                         # Now format it to a stable format
                         event_start = datetime.strptime(event_start_string, '%Y-%m-%dT%H:%M:%S')
                         event_end = datetime.strptime(event_end_string, '%Y-%m-%dT%H:%M:%S')
-                        # If it's an event contained in a single day, add its time to the map
-                        if event_end.day == event_start.day:
-                            event_duration = event_end - event_start
-                            add_duration_to_date(event_start.date(), event_duration, calendar_name)
-                        # Events that span multiple days
-                        # TODO: Don't think this is working
-                        else:
-                            day_count = (event_end.date() - event_start.date()).days + 1
-                            for single_date in (event_start + timedelta(n) for n in range(day_count)):
-                                duration = timedelta(hours=12)
-                                # if it's the first day, take the difference from 12:00am tomorrow and the event start
-                                if single_date.date() == event_start.date():
-                                    duration = datetime.combine(event_start.date() + timedelta(days=1), datetime.min.time()) - event_start
-                                # if it's the last day, take the difference from the event end and 12:am that day
-                                if single_date.date() == event_end.date():
-                                    duration = event_end - datetime.combine(event_end.date(), datetime.min.time())
-                                add_duration_to_date(single_date.date(), duration, calendar_name)
+                    # # Debug tool for watching specific events
+                    # if event_start.date() == date(2014, 4, 30) and calendar_name=="Important":
+                    #     pass
+                    # Event is contained in a single day
+                    if event_end.day == event_start.day:
+                        event_duration = event_end - event_start
+                        add_duration_to_date(event_start.date(), event_duration, calendar_name)
+                    # Events that span multiple days
+                    else:
+                        day_count = (event_end.date() - event_start.date()).days + 1
+                        for single_date in (event_start + timedelta(n) for n in range(day_count)):
+                            event_duration = timedelta(hours=12)
+                            # if it's the first day, take the difference from 12:00am tomorrow and the event start
+                            if single_date.date() == event_start.date():
+                                event_duration = datetime.combine(event_start.date() + timedelta(days=1), datetime.min.time()) - event_start
+                            # if it's the last day, take the difference from the event end and 12:am that day
+                            elif single_date.date() == event_end.date():
+                                event_duration = event_end - datetime.combine(event_end.date(), datetime.min.time())
+                            # We only want to record 12 hours for events that last all day
+                            if event_duration == timedelta(days=1):
+                                event_duration = timedelta(hours=12)
+                            add_duration_to_date(single_date.date(), event_duration, calendar_name)
             page_token = events.get('nextPageToken')
             if not page_token:
                 break
@@ -186,19 +193,8 @@ for key, current_date_data in dates_map.items():
         if total_time.total_seconds() > 0:
             # percent_of_day = (cal_data[0].total_seconds() / total_time.total_seconds()) * 100
             percent_of_day = (cal_data[0].total_seconds() / timedelta(days=1).total_seconds()) * 100
-            current_date_data['calendars'][cal] = [cal_data[0], round(percent_of_day, 2)]
-
-
-
+            current_date_data['calendars'][cal] = [(cal_data[0].total_seconds() / 3600.0), round(percent_of_day, 2)]
 print "%s events were processed" % num_events
-
-# TODO: cache date_map
-
-# # http://stackoverflow.com/questions/5022447/converting-date-from-python-to-javascript
-# @app.template_filter('date_to_millis')
-# def date_to_millis(d):
-#     """Converts a datetime object to the number of milliseconds since the unix epoch."""
-#     return int(time.mktime(d.timetuple())) * 1000
 
 @app.route("/")
 def hello():

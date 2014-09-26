@@ -14,7 +14,7 @@ Highcharts.createElement('link', {
 }, null, document.getElementsByTagName('head')[0]);
 
 Highcharts.theme = {
-   colors: ["#16A765", "#FFAD46", "#F83A22", "#C2C2C2", "#A47AE2", "#4986E7", "#ff0066", "#eeaaee",
+   colors: ["#16A765", "#FFAD46", "#F83A22", "#A47AE2", "#4986E7", "#ff0066", "#eeaaee",
       "#55BF3B", "#DF5353", "#7798BF", "#aaeeee"],
    chart: {
       backgroundColor: {
