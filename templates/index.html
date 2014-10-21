@@ -16,9 +16,7 @@
         {% for date, date_data in dates_map.iteritems() %}
             {% for calendar, calendar_data in date_data.calendars.iteritems() %}
                 {% if date <= today.date() %}
-                {% if calendar_data.1 != None %} // TODO: This shouldn't occur, but it does
         seriesOptions["{{ calendar }}"].push([Date.parse("{{ date.month }} {{ date.day }}, {{ date.year }}"), {{ calendar_data }}]);
-                {% endif %}
                 {% endif %}
             {% endfor %}
         {% endfor %}
@@ -31,7 +29,7 @@
                     zoomType: 'x'
                 },
                 title: {
-                    text: 'Percent composition of date by calendar',
+                    text: 'percent of time recorded per calendar',
                     x: -200
                 },
                 legend: {
@@ -43,6 +41,7 @@
                         enabled: false
                     },
                     type: 'datetime',
+                    min: Date.UTC(2014, 0, 0),
                     max: Date.now()
                 },
                 yAxis: {
@@ -123,6 +122,16 @@
                         title: 'NOTE'
                     },
                     {
+                        x: Date.UTC(2011, 7, 4),
+                        text: "Move into new place, get prepared for school",
+                        title: 'NOTE'
+                    },
+                    {
+                        x: Date.UTC(2011, 11, 8),
+                        text: "Finals",
+                        title: 'NOTE'
+                    },
+                    {
                         x: Date.UTC(2012, 6, 1),
                         text: "Worked at Indeed, didn't keep track of work or productivity on my calendar",
                         title: 'NOTE'
@@ -130,6 +139,36 @@
                     {
                         x: Date.UTC(2013, 0, 21),
                         text: 'Started work at Thinktiv',
+                        title: 'NOTE'
+                    },
+                    {
+                        x: Date.UTC(2013, 0, 0),
+                        text: 'Vacation to Peru',
+                        title: 'NOTE'
+                    },
+                    {
+                        x: Date.UTC(2013, 5, 2),
+                        text: 'Client website issue at work',
+                        title: 'NOTE'
+                    },
+                    {
+                        x: Date.UTC(2014, 2, 11),
+                        text: 'SXSW',
+                        title: 'NOTE'
+                    },
+                    {
+                        x: Date.UTC(2014, 4, 1),
+                        text: 'Dog sit and fix apartment',
+                        title: 'NOTE'
+                    },
+                    {
+                        x: Date.UTC(2014, 4, 23),
+                        text: 'Get pumped for Memorial day',
+                        title: 'NOTE'
+                    },
+                    {
+                        x: Date.UTC(2014, 6, 25),
+                        text: 'Take care of Mom and see family',
                         title: 'NOTE'
                     }
                 ],
@@ -144,6 +183,9 @@
 <body>
 
 <div id="container" style="min-width: 310px; height: 400px; max-width: 800px; margin: 0 auto"></div>
+<div id="about" style="margin-top: 40px; color: #000; font-family: sans-serif; font-size: 20px;">
+    <p><a href="">More info here</a></p>
+</div>
 
 </body>
 </html>

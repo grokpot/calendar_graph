@@ -84,8 +84,7 @@ http = credentials.authorize(http)
 # Build a service object for interacting with the API. Visit
 # the Google Developers Console
 # to get a developerKey for your own application.
-service = build(serviceName='calendar', version='v3', http=http,
-       developerKey=API_KEY)
+service = build(serviceName='calendar', version='v3', http=http, developerKey=API_KEY)
 
 ## Map data structure
 # date_map =
@@ -120,7 +119,7 @@ def add_duration_to_date(current_date, duration, calendar_name):
     dates_map.update({current_date: current_date_data})
 
 num_events = 0
-calendars = service.calendarList().list().execute()['items'] # Read in all calendars for user
+calendars = service.calendarList().list().execute()['items']  # Read in all calendars for user
 for calendar in calendars:
     calendar_name = calendar['summary']
     if calendar_name in CALENDARS:
@@ -141,7 +140,7 @@ for calendar in calendars:
                         # subtract a day because if an all day event ends at midnight, google returns the following date
                         event_end = datetime.strptime(event_end_string, '%Y-%m-%d') - timedelta(days=1)
                     # Events with times (datetime objects)
-                    else :
+                    else:
                         # Google may or may not append milliseconds or timezones, so split that off and return the match
                         event_start_string = re.match('(\d{4}-\d{2}-\w{5}:\d{2}:\d{2})', event.get('start').get('dateTime')).group()
                         event_end_string = re.match('(\d{4}-\d{2}-\w{5}:\d{2}:\d{2})', event.get('end').get('dateTime')).group()
@@ -149,8 +148,8 @@ for calendar in calendars:
                         event_start = datetime.strptime(event_start_string, '%Y-%m-%dT%H:%M:%S')
                         event_end = datetime.strptime(event_end_string, '%Y-%m-%dT%H:%M:%S')
                     # # Debug tool for watching specific events
-                    # if event_start.date() == date(2014, 4, 30) and calendar_name=="Important":
-                    #     pass
+                    if event_start.date() == date(2013, 10, 29) and calendar_name == "Fun":
+                        pass
                     # Event is contained in a single day
                     if event_end.day == event_start.day:
                         event_duration = event_end - event_start
