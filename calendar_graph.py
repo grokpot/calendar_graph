@@ -99,7 +99,7 @@ service = build(serviceName='calendar', version='v3', http=http, developerKey=AP
 #     }
 # }
 dates_map = {}
-CALENDARS = ['Productive', 'Fun', 'Important', 'Exercise', 'rprater@thinktiv.com']
+CALENDARS = ['Productive', 'Fun', 'Important', 'Exercise', 'rp@bloodbuy.com']
 
 def add_duration_to_date(current_date, duration, calendar_name):
     # Get the date for this event

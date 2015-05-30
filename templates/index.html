@@ -71,26 +71,26 @@
                         thisYearButton: {
                             x: -255,
                             onclick: function () {
-                                chart.xAxis[0].setExtremes(Date.UTC(2014, 1, 1), Date.UTC(2015, 1, 1));
+                                chart.xAxis[0].setExtremes(Date.UTC(2015, 1, 1), Date.UTC(2016, 1, 1));
                             },
                             symbol: 'square',
-                            text: "2014"
+                            text: "2015"
                         },
                         lastMonthButton: {
                             x: -175,
                             onclick: function () {
-                                chart.xAxis[0].setExtremes(Date.UTC(2014, 8, 1), Date.UTC(2014, 8, 30));
+                                chart.xAxis[0].setExtremes(Date.UTC(2015, 4, 1), Date.UTC(2015, 4, 30));
                             },
                             symbol: 'square',
-                            text: "08/14"
+                            text: "04/15"
                         },
                         lastWeekButton: {
                             x: -50,
                             onclick: function () {
-                                chart.xAxis[0].setExtremes(Date.UTC(2014, 8, 14), Date.UTC(2014, 8, 20));
+                                chart.xAxis[0].setExtremes(Date.UTC(2015, 4, 18), Date.UTC(2015, 4, 24));
                             },
                             symbol: 'square',
-                            text: "week in 08/14"
+                            text: "week in 04/14"
                         }
                     }
                 }
@@ -111,11 +111,6 @@
                 type: 'flags',
                 name: 'Notes',
                 data: [
-                    {
-                        x: Date.UTC(2013, 10, 15),
-                        text: 'Position change at Thinktiv and I started to record more work information on my calendar.',
-                        title: 'NOTE'
-                    },
                     {
                         x: Date.UTC(2010, 11, 1),
                         text: 'Added Important calendar for homework, Productive calendar for studying/chores',
@@ -138,7 +133,7 @@
                     },
                     {
                         x: Date.UTC(2013, 0, 21),
-                        text: 'Started work at Thinktiv',
+                        text: 'Started work at Thinktiv (calendar no longer available)',
                         title: 'NOTE'
                     },
                     {
@@ -147,30 +142,10 @@
                         title: 'NOTE'
                     },
                     {
-                        x: Date.UTC(2013, 5, 2),
-                        text: 'Client website issue at work',
-                        title: 'NOTE'
-                    },
-                    {
                         x: Date.UTC(2014, 2, 11),
                         text: 'SXSW',
                         title: 'NOTE'
                     },
-                    {
-                        x: Date.UTC(2014, 4, 1),
-                        text: 'Dog sit and fix apartment',
-                        title: 'NOTE'
-                    },
-                    {
-                        x: Date.UTC(2014, 4, 23),
-                        text: 'Get pumped for Memorial day',
-                        title: 'NOTE'
-                    },
-                    {
-                        x: Date.UTC(2014, 6, 25),
-                        text: 'Take care of Mom and see family',
-                        title: 'NOTE'
-                    }
                 ],
                 tooltip: {
                     pointFormat: '{point.text}'
